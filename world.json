@@ -1,0 +1,7 @@
+{
+    "worldname": "Testing World",
+    "objects": [
+        {"reference": "og:cube", "position": [0,0,0], "rotation": [0,0,0], "scale":[10,0.1,10]},
+        {"reference": "og:cube", "position": [0,1,0], "rotation": [0,0,0], "scale":[1,1,1]}
+    ]
+}
