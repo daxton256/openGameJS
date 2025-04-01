@@ -24,7 +24,7 @@ def play():
     try:
         while True:
             data = json.loads(ws.receive())
-            print(data)
+            #print(data)
             if(data["action"] == "reg_uuid"):
                 myUUID = data.get("UUID")
                 if(myUUID in clientSockets):
@@ -33,19 +33,25 @@ def play():
                 #These have to be seperated into two different dictionaries due to serialization issues
                 #They could be merged into a singular dictionary, but this would require large amounts of code for every time player data is sent.
                 clientSockets[myUUID] = ws 
-                mi = {"UUID": myUUID, "position": [0,0,0], "rotation": 0} 
+                mi = {"UUID": myUUID, "position": [0,1,0], "rotation": 0} 
                 clientData[myUUID] = mi
                 request.environ["UUID"] = myUUID
                 ws.send(json.dumps({"action": "ready", "players": [clientData[player] for player in clientData if clientData[player] != mi], "world": world}))
                 sendToUUIDs(json.dumps({"action": "join", "data": mi}), [player for player in clientSockets if player != myUUID]) #Alerting all online players of new player join
 
+            if(data["action"] == "transform"):
+                if("UUID" in request.environ):
+                    myUUID = request.environ["UUID"]
+                    clientData[myUUID]["position"] = data.get("position")
+                    clientData[myUUID]["rotation"] = data.get("rotation")
+                    sendToUUIDs(json.dumps({"action": "transform", "data": clientData[myUUID]}), [player for player in clientSockets if player != myUUID])
             #ws.send(data)
     except ConnectionClosed:
-        print("bye bye")
-        if(request.environ["UUID"]):
+        if("UUID" in request.environ):
             print("Removing:", request.environ["UUID"])
             del clientSockets[request.environ["UUID"]]
             del clientData[request.environ["UUID"]]
+            sendToUUIDs(json.dumps({"action": "left", "UUID": request.environ["UUID"]}), [player for player in clientSockets])
     return ''
 
 @app.route('/')
