@@ -3,6 +3,37 @@
     body {
         margin: 0;
     }
+    .chat {
+      position: absolute;
+      
+      top:0%;
+      left: 0%;
+      width: 25%;
+      height: 25%;
+      background: rgba(0,0,0,0.5);
+      border-right: 1px solid white;
+      border-bottom: 1px solid white;
+      overflow: auto;
+    }
+    p {
+      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+      user-select: none;
+      font-size: small;
+    }
+    .chatInp {
+      background: none;
+      border: none;
+      border-top: 1px solid white;
+      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+      width: 25%;
+      height: 10%;
+      position: absolute;
+      top:25%;
+      left: 0%;
+      outline: none;
+    }
 </style>
 <script type="importmap">
     {
@@ -13,3 +44,7 @@
     }
 </script>
 <script src="play.js" type="module"></script>
+<div class="chat">
+<p>[test]: text</p><p>[test]: text</p><p>[test]: text</p><p>[test]: text</p><p>[test]: text</p><p>[test]: text</p><p>[test]: text</p><p>[test]: text</p><p>[test]: text</p><p>[test]: text</p>
+</div>
+<input class="chatInp" type="text" placeholder="Send a message">

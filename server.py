@@ -45,6 +45,11 @@ def play():
                     clientData[myUUID]["position"] = data.get("position")
                     clientData[myUUID]["rotation"] = data.get("rotation")
                     sendToUUIDs(json.dumps({"action": "transform", "data": clientData[myUUID]}), [player for player in clientSockets if player != myUUID])
+
+            if(data["action"] == "tell"):
+                if("UUID" in request.environ):
+                    myUUID = request.environ["UUID"]
+                    sendToUUIDs(json.dumps({"action": "message", "from": data["from"], "data": data["data"][:250]}), [player for player in clientSockets])
             #ws.send(data)
     except ConnectionClosed:
         if("UUID" in request.environ):
@@ -58,4 +63,4 @@ def play():
 def home():
     return redirect(code=301, location="/static/play.html")
 
-app.run()
+app.run(host="0.0.0.0")
