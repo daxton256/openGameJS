@@ -1,7 +1,7 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, send_file, make_response
 from simple_websocket import Server, ConnectionClosed
 from tinydb import TinyDB, Query
-import secrets, json, time, hashlib
+import secrets, json, time, hashlib, os
 
 app = Flask(__name__)
 db = TinyDB('data.json')
@@ -62,5 +62,16 @@ def play():
 @app.route('/')
 def home():
     return redirect(code=301, location="/static/play.html")
+
+@app.route('/asset', methods=["GET"])
+def getmod():
+    if(request.args.get("model")):
+        if(os.path.exists(f"Assets/{request.args.get('model')}.glb")):
+            response = make_response(send_file(f"Assets/{request.args.get('model')}.glb"))
+            response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+            return response
+        else:
+            return None
+    return None
 
 app.run(host="0.0.0.0")

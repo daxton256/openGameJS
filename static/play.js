@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const params =  new URLSearchParams(window.location.search);
 if(params.id !== null){
@@ -13,12 +15,13 @@ if(params.id !== null){
     scene.add( light );
 
     const wsURL = (window.location.protocol === "http:" ? "ws:" : "wss:") + '//' + window.location.host + "/play";
+    const httpURL = window.location.protocol + '//' + window.location.host;
+
     const socket = new WebSocket(wsURL);
     const resources = {
         "og:cube": new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshPhongMaterial({ color: 0xffffff }))
     }
     const players = {}
-    const keysPressed = {}
 
     function newText(text) {
         const canvas = document.createElement("canvas");
@@ -79,13 +82,27 @@ if(params.id !== null){
             });
 
             msg.world.objects.forEach(object => {
-                console.log(object);
-                let wo = resources[object.reference].clone(true);
-                scene.add(wo);
-                wo.position.set(object.position[0], object.position[1], object.position[2]);
-                wo.rotation.set(object.rotation[0], object.rotation[1], object.rotation[2]);
-                wo.scale.set(object.scale[0], object.scale[1], object.scale[2]);
-                console.log(wo.scale);
+                if(object.reference.startsWith("og:") && resources[object.reference]){
+                    console.log(object);
+                    let wo = resources[object.reference].clone(true);
+                    scene.add(wo);
+                    wo.position.set(object.position[0], object.position[1], object.position[2]);
+                    wo.rotation.set(object.rotation[0], object.rotation[1], object.rotation[2]);
+                    wo.scale.set(object.scale[0], object.scale[1], object.scale[2]);
+                    console.log(wo.scale);
+                }
+                if(object.reference.startsWith("mod:")) {
+                    const loader = new GLTFLoader();
+                    loader.load(
+                        httpURL + "/asset?model=" + object.reference.split(":")[1],
+                        function(gtlf){
+                            gtlf.scene.position.set(object.position[0], object.position[1], object.position[2]);
+                            gtlf.scene.rotation.set(object.rotation[0], object.rotation[1], object.rotation[2]);
+                            gtlf.scene.scale.set(object.scale[0], object.scale[1], object.scale[2]);
+                            scene.add(gtlf.scene);
+                        }, null, null 
+                    );
+                }
             });
         }
 
@@ -110,47 +127,58 @@ if(params.id !== null){
         }
     });
 
+    socket.addEventListener("close", function(){
+        renderer.domElement.remove();
+        alert("Server closed");
+    });
+
     //scene.add(resources["og:cube"].clone(true));
 
     camera.position.y = 1;
-
+    playercontrol(camera, 1);
     function animate() {
-        let moved = false;
-
-        if(keysPressed["s"]){
-            camera.translateZ(0.1);
-            moved = true;
-        }
-        if(keysPressed["w"]){
-            camera.translateZ(-0.1);
-            moved = true;
-        }
-        if(keysPressed["a"]){
-            camera.rotation.y += 0.05;
-            moved = true;
-        }
-        if(keysPressed["d"]){
-            camera.rotation.y  -= 0.05;
-            moved = true;
-        }
-
-        if(moved) {
-            socket.send(JSON.stringify({"action": "transform", "position": [camera.position.x, camera.position.y, camera.position.z], "rotation": camera.rotation.y}));
-            moved = false;
-        }
-
         renderer.render( scene, camera );
     }
 
-    renderer.domElement.setAttribute('tabindex', '0'); 
-    renderer.domElement.addEventListener("keydown", function(event){
-        keysPressed[event.key] = true;
-    });
-
-    renderer.domElement.addEventListener("keyup", function(event){
-        keysPressed[event.key] = false;
-    });
-
+    function playercontrol(camera, speed) {
+        speed = speed / 10;
+        let keys = {};
+        document.addEventListener("keydown", function(event){
+            if(!keys[event.key]) {
+                keys[event.key] = true;
+            }
+        });
+        document.addEventListener("keyup", function(event){
+            keys[event.key] = false;
+        });
+        const controls = new PointerLockControls( camera, document.body );
+        document.addEventListener( 'click', function () {
+            controls.lock();
+        });
+        setInterval(function(){
+            if(keys.w) {
+                controls.moveForward(speed);
+            }
+            if(keys.s) {
+                controls.moveForward(-speed);
+            }
+            if(keys.a) {
+                controls.moveRight(-speed);
+            }
+            if(keys.d) {
+                controls.moveRight(speed);
+            }
+        }, 0);
+        let prevPos = new THREE.Vector3().copy(camera.position);
+        let prevRot = new THREE.Vector3().copy(camera.rotation);
+        setInterval(function(){
+            if(!prevPos.equals(camera.position) || prevRot.y != camera.rotation.y) {
+                socket.send(JSON.stringify({"action": "transform", "position": [camera.position.x, camera.position.y, camera.position.z], "rotation": camera.rotation.y}));
+                prevPos = new THREE.Vector3().copy(camera.position);
+                prevRot = new THREE.Vector3().copy(camera.rotation);
+            }
+        }, 10);
+    }
 } else {
     alert("INVALID NAME / ID");
 }
