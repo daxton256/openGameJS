@@ -34,14 +34,15 @@ if(params.id !== null){
         return labelObj;
     }
 
-    function renderChatMsg(from, message) {
-        let chats = document.querySelector(".chat");
+    function renderChatMsg(from, message, color="white") {
+        let chats = document.querySelector(".messages");
         let chatitm = document.createElement("p");
+        chatitm.style.color = color;
         chatitm.innerText = `[${from}]: ${message}`;
         chats.appendChild(chatitm);
+        chats.scrollTop = chats.scrollHeight;
     }
 
-    renderChatMsg("test", "text");
 
     function regPlayer(data){
         const group = new THREE.Group();
@@ -60,10 +61,10 @@ if(params.id !== null){
 
     socket.addEventListener("open", (event)=>{
         socket.send(JSON.stringify({"action": "reg_uuid", "UUID": params.get('id')}));
-
         document.querySelector(".chatInp").addEventListener("keydown", function(event){
             if(event.key == "Enter") {
                 socket.send(JSON.stringify({"action": "tell", "from": params.get('id'), "data": event.target.value}))
+                event.target.value = "";
             }
         });
     });
@@ -72,6 +73,7 @@ if(params.id !== null){
         //console.log("Server:", event.data);
         const msg = JSON.parse(event.data);
         if(msg.action === "ready") {
+            renderChatMsg("Game", "Welcome to the server!", "yellow");
             msg.players.forEach(element => {
                 regPlayer(element);
             });
@@ -89,6 +91,7 @@ if(params.id !== null){
 
         if(msg.action === "join") {
             regPlayer(msg.data);
+            renderChatMsg("System", `${msg.data.UUID} has joined the game.`, "yellow");
         }
 
         if(msg.action === "transform") {
@@ -100,6 +103,10 @@ if(params.id !== null){
                 scene.remove(players[msg.UUID]);
                 delete players[msg.UUID];
             }
+            renderChatMsg("System", `${msg.UUID} has left the game.`, "yellow");
+        }
+        if(msg.action === "message") {
+            renderChatMsg(msg.from, msg.data, (msg.isSystem ? "yellow" : "white"));
         }
     });
 

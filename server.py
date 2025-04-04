@@ -49,7 +49,7 @@ def play():
             if(data["action"] == "tell"):
                 if("UUID" in request.environ):
                     myUUID = request.environ["UUID"]
-                    sendToUUIDs(json.dumps({"action": "message", "from": data["from"], "data": data["data"][:250]}), [player for player in clientSockets])
+                    sendToUUIDs(json.dumps({"action": "message", "from": data["from"], "data": data["data"][:250], "isSystem": False}), [player for player in clientSockets])
             #ws.send(data)
     except ConnectionClosed:
         if("UUID" in request.environ):
