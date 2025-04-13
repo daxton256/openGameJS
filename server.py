@@ -66,8 +66,8 @@ def home():
 @app.route('/asset', methods=["GET"])
 def getmod():
     if(request.args.get("model")):
-        if(os.path.exists(f"Assets/{request.args.get('model')}.glb")):
-            response = make_response(send_file(f"Assets/{request.args.get('model')}.glb"))
+        if(os.path.exists(f"Assets/{request.args.get('model')}")):
+            response = make_response(send_file(f"Assets/{request.args.get('model')}"))
             response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
             return response
         else:

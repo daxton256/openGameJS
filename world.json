@@ -2,8 +2,6 @@
     "worldname": "Testing World",
     
     "objects": [
-        {"reference": "og:cube", "position": [0,0,0], "rotation": [0,0,0], "scale":[10,0.5,10]},
-        {"reference": "mod:skybox", "position": [0,0,0], "rotation": [0,0,0], "scale": [50,50,50]},
-        {"reference": "mod:tree", "position": [0,0,0], "rotation": [0,0,0], "scale":[1,1,1]}
+        {"reference": "mod:forest.glb", "position": [0,0,0], "rotation": [0,0,0], "scale":[1,1,1]}
     ]
 }

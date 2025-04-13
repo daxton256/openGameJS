@@ -7,15 +7,23 @@ if(params.id !== null){
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.setAnimationLoop( animate );
     document.body.appendChild( renderer.domElement );
     const light = new THREE.HemisphereLight( 0xffffff, 0x080808, 1 );
     scene.add( light );
 
+
     const wsURL = (window.location.protocol === "http:" ? "ws:" : "wss:") + '//' + window.location.host + "/play";
     const httpURL = window.location.protocol + '//' + window.location.host;
+
+    const loader = new THREE.TextureLoader();
+    loader.load(httpURL + "/asset?model=dark.png", function (texture) {
+    texture.mapping = THREE.EquirectangularReflectionMapping; // Optional
+    scene.background = texture;
+    scene.environment = texture;
+    });
 
     const socket = new WebSocket(wsURL);
     const resources = {
@@ -70,6 +78,7 @@ if(params.id !== null){
                 event.target.value = "";
             }
         });
+        
     });
 
     socket.addEventListener("message", (event) => {
@@ -135,7 +144,7 @@ if(params.id !== null){
     //scene.add(resources["og:cube"].clone(true));
 
     camera.position.y = 1;
-    playercontrol(camera, 1);
+    playercontrol(camera, 0.5);
     function animate() {
         renderer.render( scene, camera );
     }
@@ -143,6 +152,7 @@ if(params.id !== null){
     function playercontrol(camera, speed) {
         speed = speed / 10;
         let keys = {};
+        renderer.domElement.setAttribute('tabindex', '0'); 
         document.addEventListener("keydown", function(event){
             if(!keys[event.key]) {
                 keys[event.key] = true;
@@ -151,23 +161,30 @@ if(params.id !== null){
         document.addEventListener("keyup", function(event){
             keys[event.key] = false;
         });
-        const controls = new PointerLockControls( camera, document.body );
-        document.addEventListener( 'click', function () {
+        const controls = new PointerLockControls( camera, renderer.domElement );
+        renderer.domElement.addEventListener( 'click', function () {
             controls.lock();
         });
         setInterval(function(){
-            if(keys.w) {
-                controls.moveForward(speed);
+            if(document.activeElement === renderer.domElement){
+                if(keys.w) {
+                    controls.moveForward(speed);
+                }
+                if(keys.s) {
+                    controls.moveForward(-speed);
+                }
+                if(keys.a) {
+                    controls.moveRight(-speed);
+                }
+                if(keys.d) {
+                    controls.moveRight(speed);
+                }
+                if(keys.c) {
+                    document.querySelector(".chatInp").focus();
+                    controls.unlock();
+                }
             }
-            if(keys.s) {
-                controls.moveForward(-speed);
-            }
-            if(keys.a) {
-                controls.moveRight(-speed);
-            }
-            if(keys.d) {
-                controls.moveRight(speed);
-            }
+
         }, 0);
         let prevPos = new THREE.Vector3().copy(camera.position);
         let prevRot = new THREE.Vector3().copy(camera.rotation);
