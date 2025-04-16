@@ -1,6 +1,6 @@
 {
     "worldname": "Testing World",
-    
+    "playerModel": "officer.glb",
     "objects": [
         {"reference": "mod:forest.glb", "position": [0,0,0], "rotation": [0,0,0], "scale":[1,1,1]}
     ]

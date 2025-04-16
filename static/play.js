@@ -3,7 +3,10 @@ import { PointerLockControls } from 'three/addons/controls/PointerLockControls.j
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const params =  new URLSearchParams(window.location.search);
-if(params.id !== null){
+
+if(params.get("id")){
+    params.set("id", Math.floor(Math.random() * 100000));
+}
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
@@ -30,6 +33,7 @@ if(params.id !== null){
         "og:cube": new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshPhongMaterial({ color: 0xffffff }))
     }
     const players = {}
+    var world = null;
 
     function newText(text) {
         const canvas = document.createElement("canvas");
@@ -56,18 +60,43 @@ if(params.id !== null){
 
 
     function regPlayer(data){
-        const group = new THREE.Group();
-        group.add(resources["og:cube"].clone(true));
+        console.log(world);
+        if(world.playerModel == "default"){
+            const group = new THREE.Group();
+            group.add(resources["og:cube"].clone(true));
 
-        let gamerTag = newText(data.UUID);
-        group.add(gamerTag);
-        gamerTag.position.set(0,1,0);
-        gamerTag.scale.set(3,1,1);
+            let gamerTag = newText(data.UUID);
+            group.add(gamerTag);
+            gamerTag.position.set(0,1,0);
+            gamerTag.scale.set(3,1,1);
 
-        scene.add(group);
-        group.position.set(data.position[0], data.position[1], data.position[2]);
-        group.rotation.y = data.rotation;
-        players[data.UUID] = group;
+            scene.add(group);
+            group.position.set(data.position[0], data.position[1], data.position[2]);
+            group.rotation.y = data.rotation;
+            players[data.UUID] = group;
+        } else {
+            const loader = new GLTFLoader();
+            loader.load(
+                httpURL + "/asset?model=" + world.playerModel,
+                function(gtlf){
+                    const group = new THREE.Group();
+                    group.add(gtlf.scene);
+
+                    let gamerTag = newText(data.UUID);
+                    group.add(gamerTag);
+                    gamerTag.position.set(0,1,0);
+                    gamerTag.scale.set(3,1,1);
+        
+                    scene.add(group);
+                    group.position.set(data.position[0], data.position[1], data.position[2]);
+                    group.rotation.y = data.rotation;
+                    players[data.UUID] = group;
+
+                }, null, null 
+            );
+
+
+        }
     }
 
     socket.addEventListener("open", (event)=>{
@@ -85,12 +114,12 @@ if(params.id !== null){
         //console.log("Server:", event.data);
         const msg = JSON.parse(event.data);
         if(msg.action === "ready") {
+            world = msg.world;
             renderChatMsg("Game", "Welcome to the server!", "yellow");
             msg.players.forEach(element => {
                 regPlayer(element);
             });
-
-            msg.world.objects.forEach(object => {
+            world.objects.forEach(object => {
                 if(object.reference.startsWith("og:") && resources[object.reference]){
                     console.log(object);
                     let wo = resources[object.reference].clone(true);
@@ -170,6 +199,9 @@ if(params.id !== null){
                 if(keys.w) {
                     controls.moveForward(speed);
                 }
+                if(keys.Shift) {
+                    controls.moveForward(speed);
+                }
                 if(keys.s) {
                     controls.moveForward(-speed);
                 }
@@ -196,6 +228,3 @@ if(params.id !== null){
             }
         }, 10);
     }
-} else {
-    alert("INVALID NAME / ID");
-}
