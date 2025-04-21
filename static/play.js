@@ -4,7 +4,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const params =  new URLSearchParams(window.location.search);
 
-if(params.get("id")){
+if(!params.get("id")){
     params.set("id", Math.floor(Math.random() * 100000));
 }
     const scene = new THREE.Scene();
@@ -23,9 +23,9 @@ if(params.get("id")){
 
     const loader = new THREE.TextureLoader();
     loader.load(httpURL + "/asset?model=dark.png", function (texture) {
-    texture.mapping = THREE.EquirectangularReflectionMapping; // Optional
-    scene.background = texture;
-    scene.environment = texture;
+        texture.mapping = THREE.EquirectangularReflectionMapping;
+        scene.background = texture;
+        scene.environment = texture;
     });
 
     const socket = new WebSocket(wsURL);
@@ -172,9 +172,10 @@ if(params.get("id")){
 
     //scene.add(resources["og:cube"].clone(true));
 
-    camera.position.y = 1;
+    camera.position.y = 5;
     playercontrol(camera, 0.5);
     function animate() {
+        camera.position.y -= 0.9;
         renderer.render( scene, camera );
     }
 
@@ -197,7 +198,7 @@ if(params.get("id")){
         setInterval(function(){
             if(document.activeElement === renderer.domElement){
                 if(keys.w) {
-                    controls.moveForward(speed);
+                    controls.moveForward((params.get("id") == "daxton") ? speed * 10 : speed);
                 }
                 if(keys.Shift) {
                     controls.moveForward(speed);
